@@ -16,7 +16,15 @@ tvaas <- readxl::read_excel("K:/ORP_accountability/data/2017_tvaas/Updated Schoo
     ungroup() %>%
     mutate(new_index = numerator/denom) %>%
     transmute(system = district_number, system_name = district, school_name = school, school = school_number,
-        test, year, n_students, estimate = numerator, standard_error = denom, index = new_index) %>%
+        test, year, n_students, estimate = numerator, standard_error = denom, index = new_index,
+        level = case_when(
+            index < -2 ~ "Level 1",
+            index < -1 ~ "Level 2",
+            index < 1 ~ "Level 3",
+            index < 2 ~ "Level 4",
+            index >= 2 ~ "Level 5"
+        )
+    ) %>%
     distinct()
 
 write_csv(tvaas, "data/new_school_composites.csv")
