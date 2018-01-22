@@ -29,7 +29,7 @@ hs_TVAAS <- read_excel("K:/ORP_accountability/data/2017_tvaas/Updated School Sub
     ) %>%
     distinct()
 
-write_csv(hs_TVAAS, "data/tvaas_hs_composites.csv", na = "")
+write_csv(hs_TVAAS, path = "data/tvaas_hs_composites.csv", na = "")
 
 # Grades for preview
 pools_immune <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
@@ -56,4 +56,4 @@ grades <- hs_TVAAS %>%
         )
     )
 
-write_csv(grades, "data/growth_grades.csv", na = "")
+write_csv(grades, path = "data/growth_grades.csv", na = "")

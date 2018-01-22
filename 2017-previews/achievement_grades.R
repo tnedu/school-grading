@@ -11,18 +11,17 @@ science_eoc <- c("Biology I", "Chemistry")
 pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool)
 
-system_base <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
+school_base <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
     col_types = c("iiicccddddddddddddddddddddddddd")) %>%
-    mutate(grade = if_else(subject == "ACT Composite", "11", grade)) %>%
     inner_join(pools, by = c("system", "school"))
 
 # 2016 HS Success Rate
-hs_amos <- system_base %>%
+hs_amos <- school_base %>%
     filter(year == 2016,
         pool == "HS",
-        subgroup %in% accountability_subgroups, grade %in% as.character(3:12),
-        subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc, "ACT Composite"),
-        grade %in% as.character(3:12)) %>%
+        subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc),
+        grade %in% as.character(3:12),
+        subgroup %in% accountability_subgroups) %>%
     mutate(grade = as.numeric(grade),
         subject = case_when(
             subject %in% math_eoc & grade %in% 3:8 ~ "Math",
@@ -78,10 +77,10 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
         pct_on_mastered_prior = if_else(valid_tests != 0, round5(100 * (n_prof + n_adv)/valid_tests, 1), NA_real_))
 
 # 2017 Success Rates
-success_rate_2017 <- system_base %>%
+success_rate_2017 <- school_base %>%
     filter(year == 2017,
         subgroup %in% accountability_subgroups, grade %in% as.character(3:12),
-        subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc, "ACT Composite"),
+        subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc),
         grade %in% as.character(3:12)) %>%
     mutate(grade = as.numeric(grade),
         subject = case_when(
@@ -144,4 +143,4 @@ ach_grades <- success_rate_2017 %>%
         grade_achievement = pmin(grade_achievement_abs, grade_achievement_AMO)
     )
 
-write_csv(ach_grades, "data/achievement_grades.csv", na = "")
+write_csv(ach_grades, path = "data/achievement_grades.csv", na = "")
