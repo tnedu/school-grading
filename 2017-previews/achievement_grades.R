@@ -1,8 +1,9 @@
 library(acct)
 library(tidyverse)
 
-accountability_subgroups <- c("All Students", "Black/Hispanic/Native American", "Economically Disadvantaged",
-    "English Learners", "Students with Disabilities", "Super Subgroup")
+subgroups <- c("All Students", "Black/Hispanic/Native American", "Economically Disadvantaged",
+    "English Learners with T1/T2", "Students with Disabilities", "Super Subgroup",
+    "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White")
 
 math_eoc <- c("Algebra I", "Algebra II", "Geometry", "Integrated Math I", "Integrated Math II", "Integrated Math III")
 english_eoc <- c("English I", "English II", "English III")
@@ -21,8 +22,9 @@ hs_amos <- school_base %>%
         pool == "HS",
         subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc),
         grade %in% as.character(3:12),
-        subgroup %in% accountability_subgroups) %>%
+        subgroup %in% subgroups) %>%
     mutate(grade = as.numeric(grade),
+        subgroup = if_else(subgroup == "English Learners with T1/T2", "English Learners", subgroup),
         subject = case_when(
             subject %in% math_eoc & grade %in% 3:8 ~ "Math",
             subject %in% english_eoc & grade %in% 3:8 ~ "ELA",
@@ -54,7 +56,7 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
         pool == "K8",
         subject %in% c("Math", "RLA", "Science", math_eoc, english_eoc, science_eoc),
         grade %in% as.character(3:12),
-        subgroup %in% accountability_subgroups) %>%
+        subgroup %in% subgroups) %>%
     mutate(grade = as.integer(grade),
         subject = case_when(
                subject %in% math_eoc & grade %in% 3:8 ~ "Math",
@@ -79,7 +81,7 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
 # 2017 Success Rates
 success_rate_2017 <- school_base %>%
     filter(year == 2017,
-        subgroup %in% accountability_subgroups, grade %in% as.character(3:12),
+        subgroup %in% subgroups, grade %in% as.character(3:12),
         subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc),
         grade %in% as.character(3:12)) %>%
     mutate(grade = as.numeric(grade),
