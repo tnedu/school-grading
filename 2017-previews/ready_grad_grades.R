@@ -52,7 +52,7 @@ ready_grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accou
         AMO_target = AMO_target2017, AMO_target_4 = AMO_target2017_double
     )
 
-ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad_AMO_targets2018_JW.csv") %>%
+ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad_AMO_targets2018_JW_individualsubgroups.csv") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-Students with Disabilities")) %>%
     select(system, school, subgroup, ACT_grad = ready_grad2) %>%
     left_join(ready_grad_target, by = c("system", "school", "subgroup")) %>%
