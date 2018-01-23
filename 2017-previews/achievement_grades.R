@@ -3,7 +3,8 @@ library(tidyverse)
 
 subgroups <- c("All Students", "Black/Hispanic/Native American", "Economically Disadvantaged",
     "English Learners with T1/T2", "Students with Disabilities", "Super Subgroup",
-    "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White")
+    "American Indian or Alaska Native", "Asian", "Black or African American", "Hispanic",
+    "Native Hawaiian or Other Pacific Islander", "White")
 
 math_eoc <- c("Algebra I", "Algebra II", "Geometry", "Integrated Math I", "Integrated Math II", "Integrated Math III")
 english_eoc <- c("English I", "English II", "English III")
