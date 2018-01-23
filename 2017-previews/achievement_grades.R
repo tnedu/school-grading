@@ -86,6 +86,7 @@ success_rate_2017 <- school_base %>%
         subject %in% c("Math", "ELA", "Science", math_eoc, english_eoc, science_eoc),
         grade %in% as.character(3:12)) %>%
     mutate(grade = as.numeric(grade),
+        subgroup = if_else(subgroup == "English Learners with T1/T2", "English Learners", subgroup),
         subject = case_when(
             subject %in% math_eoc & grade %in% 3:8 ~ "Math",
             subject %in% english_eoc & grade %in% 3:8 ~ "ELA",
