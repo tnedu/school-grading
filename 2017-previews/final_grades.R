@@ -13,6 +13,7 @@ growth_grades <- read_csv("data/growth_grades.csv") %>%
     mutate(subgroup = "All Students")
 grad_grades <- read_csv("data/grad_grades.csv")
 ready_grad_grades <- read_csv("data/ready_grad_grades.csv")
+absenteeism_grades <- read_csv("data/absenteeism_grades.csv")
 elpa_grades <- read_csv("data/elpa_grades.csv")
 
 AF_grades_metrics <- pools %>%
@@ -20,6 +21,7 @@ AF_grades_metrics <- pools %>%
     full_join(growth_grades, by = c("system", "school", "subgroup")) %>%
     full_join(grad_grades, by = c("system", "school", "subgroup")) %>%
     full_join(ready_grad_grades, by = c("system", "school", "subgroup")) %>%
+    full_join(absenteeism_grades, by = c("system", "school", "subgroup")) %>%
     full_join(elpa_grades, by = c("system", "school", "subgroup")) %>%
     mutate_at(vars(starts_with("grade_")), funs(recode(., "A" = 4, "B" = 3, "C" = 2, "D" = 1, "F" = 0))) %>%
 # Weights
@@ -29,7 +31,7 @@ AF_grades_metrics <- pools %>%
         weight_growth = if_else(!is.na(grade_growth) & pool == "HS", 0.25, weight_growth),
         weight_grad = if_else(!is.na(grade_grad) & pool == "HS", 0.05, NA_real_),
         weight_ready_grad = if_else(!is.na(grade_ready_grad) & pool == "HS", 0.2, NA_real_),
-        # weight_opportunity = if_else(!is.na(grade_absenteeism), 0.1, NA_real_),
+        weight_opportunity = if_else(!is.na(grade_absenteeism), 0.1, NA_real_),
         weight_elpa = if_else(!is.na(grade_elpa), 0.1, NA_real_),
     # If no ELPA, adjust achievement and growth weights accordingly
         weight_achievement = if_else(is.na(grade_elpa) & !is.na(grade_achievement) & pool == "K8", 0.5, weight_achievement),
@@ -37,12 +39,11 @@ AF_grades_metrics <- pools %>%
         weight_growth = if_else(is.na(grade_elpa) & !is.na(weight_growth) & pool == "K8", 0.4, weight_growth),
         weight_growth = if_else(is.na(grade_elpa) & !is.na(weight_growth) & pool == "HS", 0.3, weight_growth)) %>%
     rowwise() %>%
-    mutate(total_weight = sum(weight_achievement, weight_growth, 
-            # weight_opportunity,
+    mutate(total_weight = sum(weight_achievement, weight_growth, weight_opportunity,
             weight_grad, weight_ready_grad, weight_elpa, na.rm = TRUE),
         subgroup_average = round5(sum(weight_achievement * grade_achievement,
             weight_growth * grade_growth,
-            # weight_opportunity * grade_absenteeism,
+            weight_opportunity * grade_absenteeism,
             weight_grad * grade_grad,
             weight_ready_grad * grade_ready_grad,
             weight_elpa * grade_elpa, na.rm = TRUE)/total_weight, 1)) %>%
