@@ -17,12 +17,12 @@ absenteeism_grades <- read_csv("data/absenteeism_grades.csv")
 elpa_grades <- read_csv("data/elpa_grades.csv")
 
 AF_grades_metrics <- pools %>%
-    full_join(ach_grades, by = c("system", "school", "pool")) %>%
-    full_join(growth_grades, by = c("system", "school", "subgroup")) %>%
-    full_join(grad_grades, by = c("system", "school", "subgroup")) %>%
-    full_join(ready_grad_grades, by = c("system", "school", "subgroup")) %>%
-    full_join(absenteeism_grades, by = c("system", "school", "subgroup")) %>%
-    full_join(elpa_grades, by = c("system", "school", "subgroup")) %>%
+    inner_join(ach_grades, by = c("system", "school")) %>%
+    left_join(growth_grades, by = c("system", "school", "subgroup")) %>%
+    left_join(grad_grades, by = c("system", "school", "subgroup")) %>%
+    left_join(ready_grad_grades, by = c("system", "school", "subgroup")) %>%
+    left_join(absenteeism_grades, by = c("system", "school", "subgroup")) %>%
+    left_join(elpa_grades, by = c("system", "school", "subgroup")) %>%
     mutate_at(vars(starts_with("grade_")), funs(recode(., "A" = 4, "B" = 3, "C" = 2, "D" = 1, "F" = 0))) %>%
 # Weights
     mutate(weight_achievement = if_else(!is.na(grade_achievement) & pool == "K8", 0.45, NA_real_),
@@ -66,8 +66,8 @@ all_students_grades_final <- AF_grades_metrics %>%
 
 # Targeted support schools
 targeted_support <- AF_grades_metrics %>%
-    mutate(subgroup_average = if_else(pool == "K8" & total_weight < 0.65, NA_real_, subgroup_average),
-        subgroup_average = if_else(pool == "HS" & total_weight < 0.75, NA_real_, subgroup_average)) %>%
+    mutate(subgroup_average = if_else(pool == "K8" & total_weight < 0.6, NA_real_, subgroup_average),
+        subgroup_average = if_else(pool == "HS" & total_weight < 0.7, NA_real_, subgroup_average)) %>%
     filter(subgroup %in% c("Black/Hispanic/Native American", "Economically Disadvantaged", "English Learners",
         "Students with Disabilities", "American Indian or Alaska Native", "Asian", "Black or African American",
         "Hispanic", "Native Hawaiian or Other Pacific Islander", "White")) %>%
