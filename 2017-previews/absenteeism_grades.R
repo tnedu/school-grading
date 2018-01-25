@@ -5,6 +5,14 @@ instructional_days <- readxl::read_excel("K:/Research_Transfers/2018_01_Jan_16Ab
     transmute(year = 2017, system_name = DISTRICT_NAME, system = DISTRICT_NO,
         school_name = SCHOOL_NAME, school = SCHOOL_NO, instructional_days = INSTRUCTIONAL_DAYS)
 
+demographic <- read_delim("K:/Research and Policy/ORP_Data/Student_Information/Student_Demographics/Raw_Files/Student_Demographics_2016.txt", delim = "\t") %>%
+    janitor::clean_names() %>%
+    transmute(student_key,
+        ED = directcertecondis == "Y",
+        SWD = p01 == "Y" | p02 == "Y" | p04 == "Y" | p05 == "Y" | p06 == "Y" | p07 == "Y" | p08 == "Y" | p09 == "Y" | p10 == "Y" |
+            p11 == "Y" | p12 == "Y" | p13 == "Y" | p14 == "Y" | p15 == "Y" | p17 == "Y" | p18 == "Y",
+        EL = englishlearner == "Y" | transitional1 == "Y" | transitional2 == "Y")
+
 attendance <- read_csv("K:/ORP_accountability/projects/Alex/school-grading/2017-previews/data/absenteeism_student_level.csv") %>%
     janitor::clean_names() %>%
     filter(grade %in% c("K", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")) %>%
@@ -45,13 +53,12 @@ attendance <- read_csv("K:/ORP_accountability/projects/Alex/school-grading/2017-
         ),
         chronic_absence = as.numeric(n_absences/isp_days >= 0.1),
         All = 1L
-    )
+    ) %>%
+    left_join(demographic, by = "student_key")
 
 school_CA <- tibble()
 
-for (s in c("All", "BHN", 
-            # "ED", "SWD", "EL",
-            "Black", "Hispanic", "Native", "HPI", "Asian", "White")) {
+for (s in c("All", "BHN", "ED", "SWD", "EL", "Black", "Hispanic", "Native", "HPI", "Asian", "White")) {
     
 # School all grades
     school_CA <- attendance %>%
@@ -68,7 +75,7 @@ for (s in c("All", "BHN",
     
 }
 
-school_targets <- school_CA %>%
+absenteeism_targets <- school_CA %>%
     transmute(system, school,
         subgroup = case_when(
             subgroup == "All" ~ "All Students",
@@ -78,7 +85,6 @@ school_targets <- school_CA %>%
             subgroup == "EL" ~ "English Learners",
             subgroup == "Super" ~ "Super Subgroup",
             subgroup == "Black" ~ "Black or African American",
-            subgroup == "Hispanic" ~ "Hispanic",
             subgroup == "Native" ~ "American Indian or Alaska Native",
             subgroup == "HPI" ~ "Native Hawaiian or Other Pacific Islander",
             TRUE ~ subgroup
@@ -87,9 +93,11 @@ school_targets <- school_CA %>%
         AMO_target = amo_reduction(n_students, pct_chronically_absent),
         AMO_target_4 = amo_reduction(n_students, pct_chronically_absent, double = TRUE))
 
+write_csv(absenteeism_targets, "data/absenteeism_targets.csv", na = "")
+
 absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absenteeism/school_chronic_absenteeism.csv") %>%
     select(system, school, subgroup, n_students, pct_CA = pct_chronically_absent) %>%
-    left_join(school_targets, by = c("system", "school", "subgroup")) %>%
+    left_join(absenteeism_targets, by = c("system", "school", "subgroup")) %>%
     mutate(lower_bound_ci = ci_lower_bound(n_students, pct_CA),
         grade_absenteeism_abs = case_when(
             n_students < 30 ~ NA_character_,
