@@ -11,7 +11,8 @@ english_eoc <- c("English I", "English II", "English III")
 science_eoc <- c("Biology I", "Chemistry")
 
 pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
-    select(system, school, pool)
+    select(system, school, pool) %>%
+    filter(!is.na(pool))
 
 school_base <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
     col_types = c("iiicccddddddddddddddddddddddddd")) %>%
@@ -42,7 +43,7 @@ hs_amos <- school_base %>%
     group_by(year, system, school, pool, subgroup) %>%
     summarise_at(c("valid_tests", "n_on_track", "n_mastered"), sum, na.rm = TRUE) %>%
     ungroup() %>%
-    transmute(year = 2017, system, school, pool, subgroup,
+    transmute(system, school, pool, subgroup,
         valid_tests_prior = valid_tests,
         pct_on_mastered_prior = if_else(valid_tests != 0, round5(100 * (n_on_track + n_mastered)/valid_tests, 1), NA_real_),
         AMO_target = amo_target(valid_tests_prior, pct_on_mastered_prior),
@@ -51,7 +52,7 @@ hs_amos <- school_base %>%
 # 2015 K-8 Success Rate
 k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/ASD included grades/school_base_2015_19jul2015.csv") %>%
     mutate(system = as.integer(system),
-        subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup)) %>%
+        subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners with T1/T2", subgroup)) %>%
     left_join(pools, by = c("system", "school")) %>%
     filter(year == 2015,
         pool == "K8",
@@ -59,6 +60,7 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
         grade %in% as.character(3:12),
         subgroup %in% subgroups) %>%
     mutate(grade = as.integer(grade),
+        subgroup = if_else(subgroup == "English Learners with T1/T2", "English Learners", subgroup),
         subject = case_when(
                subject %in% math_eoc & grade %in% 3:8 ~ "Math",
                subject %in% english_eoc & grade %in% 3:8 ~ "RLA",
@@ -75,7 +77,7 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
     group_by(year, system, school, pool, subgroup) %>%
     summarise_at(c("valid_tests", "n_prof", "n_adv"), sum, na.rm = TRUE) %>%
     ungroup() %>%
-    transmute(year = 2017, system, school, pool, subgroup,
+    transmute(system, school, pool, subgroup,
         valid_tests_prior = valid_tests,
         pct_on_mastered_prior = if_else(valid_tests != 0, round5(100 * (n_prof + n_adv)/valid_tests, 1), NA_real_))
 
@@ -95,18 +97,18 @@ success_rate_2017 <- school_base %>%
         )
     ) %>%
 # Aggregate by replaced subjects
-    group_by(year, system, school, pool, subject, subgroup) %>%
+    group_by(system, school, pool, subject, subgroup) %>%
     summarise_at(c("valid_tests", "n_on_track", "n_mastered"), sum, na.rm = TRUE) %>%
     ungroup() %>%
 # Suppress below 30 at subject level
     mutate_at(c("valid_tests", "n_on_track", "n_mastered"), funs(if_else(valid_tests < 30, 0, .))) %>%
-    group_by(year, system, school, pool, subgroup) %>%
+    group_by(system, school, pool, subgroup) %>%
     summarise_at(c("valid_tests", "n_on_track", "n_mastered"), sum, na.rm = TRUE) %>%
     ungroup() %>%
-    transmute(year = 2017, system, school, pool, subgroup, valid_tests,
+    transmute(system, school, pool, subgroup, valid_tests,
         pct_on_mastered = if_else(valid_tests != 0, round5(100 * (n_on_track + n_mastered)/valid_tests, 1), NA_real_),
         upper_bound_ci = ci_upper_bound(valid_tests, pct_on_mastered)) %>%
-    left_join(bind_rows(hs_amos, k8_success_2015), by = c("year", "system", "school", "subgroup", "pool")) %>%
+    left_join(bind_rows(hs_amos, k8_success_2015), by = c("system", "school", "subgroup", "pool")) %>%
 # K8 schools only count toward denominator if they have success rate in 2015 and 2017
     mutate(both_years = pool == "K8" & !is.na(pct_on_mastered) & !is.na(pct_on_mastered_prior)) %>%
     group_by(subgroup) %>%
@@ -122,7 +124,7 @@ success_rate_2017 <- school_base %>%
         pctile_change = pctile_prior - pctile_current)
 
 ach_grades <- success_rate_2017 %>%
-    transmute(year, system, school, pool, subgroup,
+    transmute(system, school, subgroup,
         grade_achievement_abs = case_when(
             pct_on_mastered >= 50 ~ "A",
             pct_on_mastered >= 45 ~ "B",
@@ -130,7 +132,7 @@ ach_grades <- success_rate_2017 %>%
             pct_on_mastered >= 25 ~ "D",
             pct_on_mastered < 25 ~ "F"
         ),
-        grade_achievement_AMO = case_when(
+        grade_achievement_target = case_when(
             pool == "HS" & pct_on_mastered >= AMO_target_4 ~ "A",
             pool == "HS" & pct_on_mastered > AMO_target ~ "B",
             pool == "HS" & upper_bound_ci >= AMO_target ~ "C",
@@ -142,9 +144,18 @@ ach_grades <- success_rate_2017 %>%
             pool == "K8" & pctile_change >= -10 ~ "D",
             pool == "K8" & pctile_change < -10 ~ "F"
         ),
-        grade_achievement_AMO = if_else(pool == "K8" & pctile_current >= 95 & pctile_prior >= 95, "B", grade_achievement_AMO),
+        grade_achievement_target = if_else(pool == "K8" & pctile_current >= 95 & pctile_prior >= 95, "B", grade_achievement_target),
     # Not setting na.rm = TRUE because schools need both absolute and AMO to get a grade
-        grade_achievement = pmin(grade_achievement_abs, grade_achievement_AMO)
+        grade_achievement = pmin(grade_achievement_abs, grade_achievement_target)
     )
 
-write_csv(ach_grades, path = "data/achievement_grades.csv", na = "")
+# Ensure one entry per school/subgroup combination
+all_school_subgroups <- ach_grades %>%
+    select(system, school, subgroup, grade_achievement) %>%
+    spread(subgroup, grade_achievement) %>%
+    gather(subgroup, grade_achievement, `All Students`:`White`) %>%
+    select(system, school, subgroup) %>%
+    left_join(ach_grades, by = c("system", "school", "subgroup")) %>%
+    arrange(system, school, subgroup)
+
+write_csv(all_school_subgroups, path = "data/achievement_grades.csv", na = "")
