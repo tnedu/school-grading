@@ -53,7 +53,7 @@ AF_grades_metrics <- pools %>%
 all_students_grades_final <- AF_grades_metrics %>%
     filter(subgroup == "All Students") %>%
     transmute(system, school, pool, designation_ineligible,
-        priority_grad = if_else(subgroup == "All Students", !designation_ineligible & grade_grad == "F", NA),
+        priority_grad = if_else(subgroup == "All Students", !designation_ineligible & grade_grad_abs == 0, NA),
         achievement_average = subgroup_average,
         achievement_grade = case_when(
             achievement_average > 3 ~ "A",
