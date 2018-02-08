@@ -111,9 +111,9 @@ success_rate_2017 <- school_base %>%
     left_join(bind_rows(hs_amos, k8_success_2015), by = c("system", "school", "subgroup", "pool")) %>%
 # K8 schools only count toward denominator if they have success rate in 2015 and 2017
     mutate(both_years = pool == "K8" & !is.na(pct_on_mastered) & !is.na(pct_on_mastered_prior)) %>%
-    group_by(subgroup) %>%
+    group_by(pool, subgroup) %>%
     mutate(denom = sum(both_years, na.rm = TRUE)) %>%
-    group_by(subgroup, both_years) %>%
+    group_by(pool, subgroup, both_years) %>%
 # Rank success rates for K8
     mutate(rank_success = if_else(!is.na(pct_on_mastered) & both_years, rank(pct_on_mastered, ties.method = "max"), NA_integer_),
         rank_success_prior = if_else(!is.na(pct_on_mastered_prior) & both_years, rank(pct_on_mastered_prior, ties.method = "max"), NA_integer_)) %>%
@@ -121,7 +121,7 @@ success_rate_2017 <- school_base %>%
 # Calculate below percentile change
     mutate(pctile_current = round5(100 * rank_success/denom, 1),
         pctile_prior = round5(100 * rank_success_prior/denom, 1),
-        pctile_change = pctile_prior - pctile_current)
+        pctile_change = pctile_current - pctile_prior)
 
 ach_grades <- success_rate_2017 %>%
     transmute(system, school, subgroup,
