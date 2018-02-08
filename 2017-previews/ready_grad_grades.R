@@ -54,13 +54,13 @@ ready_grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accou
 
 ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad_AMO_targets2018_JW_individualsubgroups.csv") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-Students with Disabilities")) %>%
+    mutate(subgroup = case_when(
+        subgroup == "English Language Learners with T1/T2" ~ "English Learners",
+        TRUE ~ subgroup)
+    ) %>%
     select(system, school, subgroup, ACT_grad = ready_grad2) %>%
     left_join(ready_grad_target, by = c("system", "school", "subgroup")) %>%
-    transmute(system, school,
-        subgroup = case_when(
-            subgroup == "English Language Learners with T1/T2" ~ "English Learners",
-            TRUE ~ subgroup
-        ),
+    transmute(system, school, subgroup,
         grade_ready_grad_abs = case_when(
             ACT_grad >= 50 ~ "A",
             ACT_grad >= 40 ~ "B",
