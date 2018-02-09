@@ -7,17 +7,17 @@ grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accountabil
     transmute(system, school,
         subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup),
         subgroup = if_else(subgroup == "Hawaiian or Pacific Islander", "Native Hawaiian or Other Pacific Islander", subgroup),
-        grad_rate_prior = 100 * grad_rate,
-        AMO_target = AMO_target2015, AMO_target_4 = AMO_target2015_double)
+        grad_rate_prior = if_else(grad_cohort >= 30, grad_rate, NA_real_),
+        AMO_target = round5(AMO_target2015, 1), AMO_target_4 = round5(AMO_target2015_double, 1))
 
 grad <- read_dta("K:/ORP_accountability/data/2016_graduation_rate/School_grad_rate2017_JP.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-English Language Learners with T1/T2", "Non-Students with Disabilities")) %>%
+    mutate(subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup),
+        subgroup = if_else(subgroup == "Hawaiian or Pacific Islander", "Native Hawaiian or Other Pacific Islander", subgroup)) %>%
     select(system, school, subgroup, grad_cohort, grad_rate) %>%
     left_join(grad_target, by = c("system", "school", "subgroup")) %>%
     mutate(upper_bound_ci = ci_upper_bound(grad_cohort, grad_rate)) %>%
-    transmute(system, school,
-        subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup),
-        subgroup = if_else(subgroup == "Hawaiian or Pacific Islander", "Native Hawaiian or Other Pacific Islander", subgroup),
+    transmute(system, school, subgroup,
         grade_grad_abs = case_when(
             grad_cohort < 30 ~ NA_character_,
             grad_rate >= 95 ~ "A",
@@ -62,11 +62,11 @@ ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad
     left_join(ready_grad_target, by = c("system", "school", "subgroup")) %>%
     transmute(system, school, subgroup,
         grade_ready_grad_abs = case_when(
-            ACT_grad >= 50 ~ "A",
-            ACT_grad >= 40 ~ "B",
-            ACT_grad >= 30 ~ "C",
-            ACT_grad >= 25 ~ "D",
-            ACT_grad < 25 ~ "F"
+            ACT_grad >= 40 ~ "A",
+            ACT_grad >= 30 ~ "B",
+            ACT_grad >= 25 ~ "C",
+            ACT_grad >= 16 ~ "D",
+            ACT_grad < 16 ~ "F"
         ),
         grade_ready_grad_target = case_when(
             ACT_grad >= AMO_target_4 ~ "A",
@@ -77,5 +77,5 @@ ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad
         ),
         grade_ready_grad = pmin(grade_ready_grad_abs, grade_ready_grad_target)
     )
-    
+
 write_csv(ready_grad, path = "data/ready_grad_grades.csv", na = "")
