@@ -89,23 +89,34 @@ absenteeism_targets <- school_CA %>%
             subgroup == "HPI" ~ "Native Hawaiian or Other Pacific Islander",
             TRUE ~ subgroup
         ),
-        pct_CA_prior = pct_chronically_absent,
+        pct_CA_prior = if_else(n_students >= 30, pct_chronically_absent, NA_real_),
         AMO_target = amo_reduction(n_students, pct_chronically_absent),
         AMO_target_4 = amo_reduction(n_students, pct_chronically_absent, double = TRUE))
 
 write_csv(absenteeism_targets, "data/absenteeism_targets.csv", na = "")
 
-absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absenteeism/school_chronic_absenteeism.csv") %>%
+pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+    select(system, school, pool) %>%
+    filter(!is.na(pool))
+
+absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absenteeism/school_chronic_absenteeism.csv",
+        col_types = "iicicccdddiiiddd") %>%
     select(system, school, subgroup, n_students, pct_CA = pct_chronically_absent) %>%
     left_join(absenteeism_targets, by = c("system", "school", "subgroup")) %>%
+    left_join(pools, by = c("system", "school")) %>%
     mutate(lower_bound_ci = ci_lower_bound(n_students, pct_CA),
         grade_absenteeism_abs = case_when(
             n_students < 30 ~ NA_character_,
-            pct_CA <= 8 ~ "A",
-            pct_CA <= 12 ~ "B",
-            pct_CA <= 17 ~ "C",
-            pct_CA <= 24 ~ "D",
-            pct_CA > 24 ~ "F"
+            pool == "K8" & pct_CA <= 6 ~ "A",
+            pool == "K8" & pct_CA <= 9 ~ "B",
+            pool == "K8" & pct_CA <= 13 ~ "C",
+            pool == "K8" & pct_CA <= 20 ~ "D",
+            pool == "K8" & pct_CA > 20 ~ "F",
+            pool == "HS" & pct_CA <= 10 ~ "A",
+            pool == "HS" & pct_CA <= 14 ~ "B",
+            pool == "HS" & pct_CA <= 20 ~ "C",
+            pool == "HS" & pct_CA <= 30 ~ "D",
+            pool == "HS" & pct_CA > 30 ~ "F"
         ),
         grade_absenteeism_reduction = case_when(
             n_students < 30 ~ NA_character_,
