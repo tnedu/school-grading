@@ -52,7 +52,13 @@ hs_amos <- school_base %>%
 # 2015 K-8 Success Rate
 k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/ASD included grades/school_base_2015_19jul2015.csv") %>%
     mutate(system = as.integer(system),
-        subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners with T1/T2", subgroup)) %>%
+        subgroup = case_when(
+            subgroup == "English Language Learners with T1/T2" ~ "English Learners with T1/T2",
+            subgroup == "Black" ~ "Black or African American",
+            subgroup == "Native American" ~ "American Indian or Alaska Native",
+            TRUE ~ subgroup 
+        )
+    ) %>% 
     left_join(pools, by = c("system", "school")) %>%
     filter(year == 2015,
         pool == "K8",
@@ -60,7 +66,10 @@ k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/
         grade %in% as.character(3:12),
         subgroup %in% subgroups) %>%
     mutate(grade = as.integer(grade),
-        subgroup = if_else(subgroup == "English Learners with T1/T2", "English Learners", subgroup),
+        subgroup = case_when(
+            subgroup == "English Learners with T1/T2" ~ "English Learners",
+            TRUE ~ subgroup 
+        ),
         subject = case_when(
                subject %in% math_eoc & grade %in% 3:8 ~ "Math",
                subject %in% english_eoc & grade %in% 3:8 ~ "RLA",
@@ -139,9 +148,9 @@ ach_grades <- success_rate_2017 %>%
             pool == "HS" & upper_bound_ci > pct_on_mastered_prior ~ "D",
             pool == "HS" & upper_bound_ci <= pct_on_mastered_prior ~ "F",
             pool == "K8" & pctile_change >= 10 ~ "A",
-            pool == "K8" & pctile_change >= 0 ~ "B",
-            pool == "K8" & pctile_change >= -2 ~ "C",
-            pool == "K8" & pctile_change >= -10 ~ "D",
+            pool == "K8" & pctile_change > 0 ~ "B",
+            pool == "K8" & round5(pctile_change, 1) >= -2 ~ "C",
+            pool == "K8" & round5(pctile_change, 1) >= -10 ~ "D",
             pool == "K8" & pctile_change < -10 ~ "F"
         ),
         grade_achievement_target = if_else(pool == "K8" & pctile_current >= 95 & pctile_prior >= 95, "B", grade_achievement_target),
