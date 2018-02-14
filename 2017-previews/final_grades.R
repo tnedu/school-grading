@@ -92,7 +92,7 @@ targeted_support <- AF_grades_metrics %>%
         targeted_support_Hispanic = Hispanic,
         targeted_support_HPI = `Native Hawaiian or Other Pacific Islander`,
         targeted_support_White = White,
-        targeted_support = if_else(is.na(final_grade), 
+        targeted_support = if_else(is.na(final_grade),
             pmax(targeted_support_BHN, targeted_support_ED, targeted_support_SWD, targeted_support_EL,
                 targeted_support_Black, targeted_support_Hispanic, targeted_support_Native,
                 targeted_support_HPI, targeted_support_Asian, targeted_support_White, na.rm = TRUE), NA_integer_)
@@ -136,7 +136,7 @@ AF_grades_final <- all_students_grades_final %>%
             overall_average > 3 ~ "A",
             overall_average > 2 ~ "B",
             overall_average > 1 ~ "C",
-            overall_average > 0 ~ "D",
+            overall_average >= 0 ~ "D",
             TRUE ~ final_grade
         ),
         targeted_support = if_else(final_grade == "D", 1L, targeted_support),
