@@ -49,21 +49,6 @@ AF_grades_metrics <- pools %>%
             weight_elpa * grade_elpa, na.rm = TRUE)/total_weight, 1)) %>%
     ungroup()
 
-# Achievement grades
-all_students_grades_final <- AF_grades_metrics %>%
-    filter(subgroup == "All Students") %>%
-    transmute(system, school, pool, designation_ineligible,
-        priority_grad = if_else(subgroup == "All Students", !designation_ineligible & grade_grad_abs == 0, NA),
-        achievement_average = subgroup_average,
-        achievement_grade = case_when(
-            achievement_average > 3 ~ "A",
-            achievement_average > 2 ~ "B",
-            achievement_average > 1 ~ "C",
-            achievement_average > 0 ~ "D",
-            achievement_average == 0 ~ "F"
-        )
-    )
-
 # Targeted support schools
 targeted_support <- AF_grades_metrics %>%
     mutate(subgroup_average = if_else(pool == "K8" & total_weight < 0.6, NA_real_, subgroup_average),
@@ -98,17 +83,32 @@ targeted_support <- AF_grades_metrics %>%
                 targeted_support_HPI, targeted_support_Asian, targeted_support_White, na.rm = TRUE), NA_integer_)
     )
 
-# Gap closure grades
-subgroup_grades_final <- AF_grades_metrics %>%
+subgroup_grades <- AF_grades_metrics %>%
     filter(subgroup %in% c("Black/Hispanic/Native American", "Economically Disadvantaged",
         "Students with Disabilities", "English Learners", "Super Subgroup")) %>%
-# Drop Super Subgroup observation if other subgroups are present
-    mutate(temp = !is.na(subgroup_average)) %>%
+    group_by(system, school) %>%
+    mutate(subgroup_count = sum(!is.na(subgroup_average))) %>%
+    ungroup() %>%
+    filter(!(subgroup == "Super Subgroup" & subgroup_count > 1)) %>%
+    mutate(subgroup = "Subgroups") %>%
     group_by(system, school, pool) %>%
-    mutate(subgroups_count = sum(temp)) %>%
-    filter(!(subgroup == "Super Subgroup" & subgroups_count > 1)) %>%
     summarise_at(c("grade_achievement", "grade_growth", "grade_grad", "grade_ready_grad", "grade_absenteeism", "grade_elpa"),
         mean, na.rm = TRUE) %>%
+    ungroup() %>%
+    rename(grade_achievement_subgroups = grade_achievement,
+        grade_growth_subgroups = grade_growth,
+        grade_grad_subgroups = grade_grad,
+        grade_ready_grad_subgroups = grade_ready_grad,
+        grade_absenteeism_subgroups = grade_absenteeism,
+        grade_elpa_subgroups = grade_elpa)
+
+all_students_grades <- AF_grades_metrics %>%
+    filter(subgroup == "All Students") %>%
+    transmute(system, school, pool, designation_ineligible, 
+        priority_grad = if_else(pool == "HS", as.integer(!designation_ineligible & grade_grad_abs == 0), NA_integer_),
+        grade_achievement, grade_growth, grade_grad, grade_ready_grad, grade_absenteeism, grade_elpa) %>%
+    left_join(subgroup_grades, by = c("system", "school", "pool")) %>%
+# All Students Weights
     mutate(weight_achievement = if_else(!is.na(grade_achievement) & pool == "K8", 0.45, NA_real_),
         weight_achievement = if_else(!is.na(grade_achievement) & pool == "HS", 0.3, weight_achievement),
         weight_growth = if_else(!is.na(grade_growth) & pool == "K8", 0.35, NA_real_),
@@ -121,18 +121,51 @@ subgroup_grades_final <- AF_grades_metrics %>%
         weight_achievement = if_else(is.na(grade_elpa) & !is.na(grade_achievement) & pool == "K8", 0.5, weight_achievement),
         weight_achievement = if_else(is.na(grade_elpa) & !is.na(grade_achievement) & pool == "HS", 0.35, weight_achievement),
         weight_growth = if_else(is.na(grade_elpa) & !is.na(weight_growth) & pool == "K8", 0.4, weight_growth),
-        weight_growth = if_else(is.na(grade_elpa) & !is.na(weight_growth) & pool == "HS", 0.3, weight_growth)) %>%
+        weight_growth = if_else(is.na(grade_elpa) & !is.na(weight_growth) & pool == "HS", 0.3, weight_growth),
+    # Subgroup Weights        
+        weight_achievement_subgroups = if_else(!is.na(grade_achievement_subgroups) & pool == "K8", 0.45, NA_real_),
+        weight_achievement_subgroups = if_else(!is.na(grade_achievement_subgroups) & pool == "HS", 0.3, weight_achievement_subgroups),
+        weight_growth_subgroups = if_else(!is.na(grade_growth_subgroups) & pool == "K8", 0.35, NA_real_),
+        weight_growth_subgroups = if_else(!is.na(grade_growth_subgroups) & pool == "HS", 0.25, weight_growth_subgroups),
+        weight_grad_subgroups = if_else(!is.na(grade_grad_subgroups) & pool == "HS", 0.05, NA_real_),
+        weight_ready_grad_subgroups = if_else(!is.na(grade_ready_grad_subgroups) & pool == "HS", 0.2, NA_real_),
+        weight_opportunity_subgroups = if_else(!is.na(grade_absenteeism_subgroups), 0.1, NA_real_),
+        weight_elpa_subgroups = if_else(!is.na(grade_elpa_subgroups), 0.1, NA_real_),
+    # If no ELPA, adjust achievement and growth weights accordingly
+        weight_achievement_subgroups = if_else(is.na(grade_elpa_subgroups) & !is.na(grade_achievement_subgroups) & pool == "K8", 0.5, weight_achievement_subgroups),
+        weight_achievement_subgroups = if_else(is.na(grade_elpa_subgroups) & !is.na(grade_achievement_subgroups) & pool == "HS", 0.35, weight_achievement_subgroups),
+        weight_growth_subgroups = if_else(is.na(grade_elpa_subgroups) & !is.na(weight_growth_subgroups) & pool == "K8", 0.4, weight_growth_subgroups),
+        weight_growth_subgroups = if_else(is.na(grade_elpa_subgroups) & !is.na(weight_growth_subgroups) & pool == "HS", 0.3, weight_growth_subgroups)) %>%
     rowwise() %>%
     mutate(total_weight = sum(weight_achievement, weight_growth, weight_opportunity,
             weight_grad, weight_ready_grad, weight_elpa, na.rm = TRUE),
-        gap_closure_average = round5(sum(weight_achievement * grade_achievement,
+        achievement_average = round5(sum(weight_achievement * grade_achievement,
             weight_growth * grade_growth,
             weight_opportunity * grade_absenteeism,
             weight_grad * grade_grad,
             weight_ready_grad * grade_ready_grad,
-            weight_elpa * grade_elpa, na.rm = TRUE)/total_weight, 1)) %>%
+            weight_elpa * grade_elpa, na.rm = TRUE)/total_weight, 1),
+        total_weight_subgroups = sum(weight_achievement_subgroups, weight_growth_subgroups, weight_opportunity_subgroups,
+            weight_grad_subgroups, weight_ready_grad_subgroups, weight_elpa_subgroups, na.rm = TRUE),
+        gap_closure_average = round5(sum(weight_achievement_subgroups * grade_achievement_subgroups,
+            weight_growth_subgroups * grade_growth_subgroups,
+            weight_opportunity_subgroups * grade_absenteeism_subgroups,
+            weight_grad_subgroups * grade_grad_subgroups,
+            weight_ready_grad_subgroups * grade_ready_grad_subgroups,
+            weight_elpa_subgroups * grade_elpa_subgroups, na.rm = TRUE)/total_weight_subgroups, 1)) %>%
     ungroup() %>%
-    transmute(system, school, gap_closure_average,
+    mutate(final_average = case_when(
+            !is.na(achievement_average) & is.na(gap_closure_average) ~ achievement_average,
+            is.na(achievement_average) & !is.na(gap_closure_average) ~ gap_closure_average,
+            !is.na(achievement_average) & !is.na(gap_closure_average) ~ round(0.6 * achievement_average + 0.4 * gap_closure_average)
+        ),
+        achievement_grade = case_when(
+            achievement_average > 3 ~ "A",
+            achievement_average > 2 ~ "B",
+            achievement_average > 1 ~ "C",
+            achievement_average > 0 ~ "D",
+            achievement_average == 0 ~ "F"
+        ),
         gap_closure_grade = case_when(
             gap_closure_average > 3 ~ "A",
             gap_closure_average > 2 ~ "B",
@@ -143,8 +176,7 @@ subgroup_grades_final <- AF_grades_metrics %>%
         )
     )
 
-AF_grades_final <- all_students_grades_final %>%
-    full_join(subgroup_grades_final, by = c("system", "school")) %>%
+AF_grades_final <- all_students_grades %>%
     full_join(bottom_five, by = c("system", "school")) %>%
     full_join(targeted_support, by = c("system", "school")) %>%
     mutate(overall_average = round5(0.6 * achievement_average + 0.4 * gap_closure_average, 1),
@@ -152,7 +184,7 @@ AF_grades_final <- all_students_grades_final %>%
         final_grade = case_when(
             designation_ineligible == 1 ~ NA_character_,
             final_grade == "F" ~ "F",
-            priority_grad ~ "F",
+            priority_grad == 1L ~ "F",
             overall_average > 3 ~ "A",
             overall_average > 2 ~ "B",
             overall_average > 1 ~ "C",
@@ -161,8 +193,7 @@ AF_grades_final <- all_students_grades_final %>%
         ),
         targeted_support = if_else(final_grade == "D", 1L, targeted_support),
         targeted_support = if_else(designation_ineligible == 1, NA_integer_, targeted_support),
-        priority_grad = if_else(is.na(priority_grad), FALSE, priority_grad),
-        targeted_support = if_else(priority_grad, NA_integer_, targeted_support),
+        targeted_support = if_else(priority_grad == 1L, NA_integer_, targeted_support),
         targeted_support = if_else(is.na(targeted_support), 0L, targeted_support)) %>%
     select(system, school, pool, designation_ineligible, priority_grad,
         achievement_average, achievement_grade, gap_closure_average, gap_closure_grade, overall_average,
