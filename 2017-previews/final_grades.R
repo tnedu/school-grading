@@ -193,7 +193,7 @@ AF_grades_final <- all_students_grades %>%
         ),
         targeted_support = if_else(final_grade == "D", 1L, targeted_support),
         targeted_support = if_else(designation_ineligible == 1, NA_integer_, targeted_support),
-        targeted_support = if_else(priority_grad == 1L, NA_integer_, targeted_support),
+        targeted_support = if_else(!is.na(priority_grad) & priority_grad == 1L, NA_integer_, targeted_support),
         targeted_support = if_else(is.na(targeted_support), 0L, targeted_support)) %>%
     select(system, school, pool, designation_ineligible, priority_grad,
         achievement_average, achievement_grade, gap_closure_average, gap_closure_grade, overall_average,
