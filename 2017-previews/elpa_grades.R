@@ -2,11 +2,11 @@ library(tidyverse)
 
 elpa <- haven::read_dta("K:/ORP_accountability/data/2017_ELPA/school_level_elpa_JW.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-Students with Disabilities", "Unidentified")) %>% 
-    transmute(system, school = schoolnumber,
+    transmute(system, school = schoolnumber, pct_met_growth_standard,
         subgroup = case_when(
             subgroup == "English Language Learners" ~ "English Learners",
             subgroup == "Native Hawaiian or Pacific Islander" ~ "Native Hawaiian or Other Pacific Islander",
-            TRUE ~ subgroup,
+            TRUE ~ subgroup
         ),
         grade_elpa = case_when(
             valid_tests < 10 ~ NA_character_,

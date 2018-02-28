@@ -134,6 +134,7 @@ success_rate_2017 <- school_base %>%
 
 ach_grades <- success_rate_2017 %>%
     transmute(system, school, subgroup,
+        pct_on_mastered_prior, pct_on_mastered, upper_bound_ci, AMO_target, AMO_target_4, pctile_current, pctile_prior,
         grade_achievement_abs = case_when(
             pct_on_mastered >= 50 ~ "A",
             pct_on_mastered >= 45 ~ "B",

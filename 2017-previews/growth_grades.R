@@ -46,7 +46,7 @@ grades <- hs_TVAAS %>%
     filter(pool == "HS") %>%
     transmute(system, school, index, pool) %>%
     bind_rows(tvaas_k8) %>%
-    transmute(system, school,
+    transmute(system, school, tvaas_index = index,
         grade_growth = case_when(
             index >= 2 ~ "A",
             index >= 1 ~ "B",

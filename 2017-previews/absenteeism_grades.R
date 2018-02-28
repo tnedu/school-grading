@@ -128,6 +128,7 @@ absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absentee
         ),
         grade_absenteeism = pmin(grade_absenteeism_abs, grade_absenteeism_reduction)
     ) %>%
-    select(system, school, subgroup, grade_absenteeism_abs, grade_absenteeism_reduction, grade_absenteeism)
+    select(system, school, subgroup, pct_CA_prior, pct_CA, lower_bound_ci, AMO_target, AMO_target_4,
+        grade_absenteeism_abs, grade_absenteeism_reduction, grade_absenteeism)
 
 write_csv(absenteeism_grades, "data/absenteeism_grades.csv", na = "")

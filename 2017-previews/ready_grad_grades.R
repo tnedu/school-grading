@@ -17,7 +17,7 @@ grad <- read_dta("K:/ORP_accountability/data/2016_graduation_rate/School_grad_ra
     select(system, school, subgroup, grad_cohort, grad_rate) %>%
     left_join(grad_target, by = c("system", "school", "subgroup")) %>%
     mutate(upper_bound_ci = ci_upper_bound(grad_cohort, grad_rate)) %>%
-    transmute(system, school, subgroup,
+    transmute(system, school, subgroup, grad_rate_prior, grad_rate, upper_bound_ci, AMO_target, AMO_target_4,
         grade_grad_abs = case_when(
             grad_cohort < 30 ~ NA_character_,
             grad_rate >= 95 ~ "A",
@@ -60,7 +60,7 @@ ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad
     ) %>%
     select(system, school, subgroup, ACT_grad = ready_grad2) %>%
     left_join(ready_grad_target, by = c("system", "school", "subgroup")) %>%
-    transmute(system, school, subgroup,
+    transmute(system, school, subgroup, ACT_grad_prior, ACT_grad, AMO_target, AMO_target_4,
         grade_ready_grad_abs = case_when(
             ACT_grad >= 40 ~ "A",
             ACT_grad >= 30 ~ "B",

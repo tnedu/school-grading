@@ -8,13 +8,23 @@ bottom_five <- read_csv("data/bottom_five.csv") %>%
     filter(bottom_five == 1) %>%
     transmute(system, school, final_grade = "F")
 
-ach_grades <- read_csv("data/achievement_grades.csv")
+ach_grades <- read_csv("data/achievement_grades.csv") %>%
+    select(system, school, subgroup, grade_achievement_abs, grade_achievement_target, grade_achievement)
+
 growth_grades <- read_csv("data/growth_grades.csv") %>%
-    mutate(subgroup = "All Students")
-grad_grades <- read_csv("data/grad_grades.csv")
-ready_grad_grades <- read_csv("data/ready_grad_grades.csv")
-absenteeism_grades <- read_csv("data/absenteeism_grades.csv")
-elpa_grades <- read_csv("data/elpa_grades.csv")
+    transmute(system, school, subgroup = "All Students", grade_growth)
+
+grad_grades <- read_csv("data/grad_grades.csv") %>%
+    select(system, school, subgroup, grade_grad_abs, grade_grad_target, grade_grad)
+
+ready_grad_grades <- read_csv("data/ready_grad_grades.csv") %>%
+    select(system, school, subgroup, grade_ready_grad_abs, grade_ready_grad_target, grade_ready_grad)
+
+absenteeism_grades <- read_csv("data/absenteeism_grades.csv") %>%
+    select(system, school, subgroup, grade_absenteeism_abs, grade_absenteeism_target, grade_absenteeism)
+
+elpa_grades <- read_csv("data/elpa_grades.csv") %>%
+    select(system, school, subgroup, grade_elpa)
 
 AF_grades_metrics <- pools %>%
     inner_join(ach_grades, by = c("system", "school")) %>%
