@@ -21,7 +21,7 @@ ready_grad_grades <- read_csv("data/ready_grad_grades.csv") %>%
     select(system, school, subgroup, grade_ready_grad_abs, grade_ready_grad_target, grade_ready_grad)
 
 absenteeism_grades <- read_csv("data/absenteeism_grades.csv") %>%
-    select(system, school, subgroup, grade_absenteeism_abs, grade_absenteeism_target, grade_absenteeism)
+    select(system, school, subgroup, grade_absenteeism_abs, grade_absenteeism_reduction, grade_absenteeism)
 
 elpa_grades <- read_csv("data/elpa_grades.csv") %>%
     select(system, school, subgroup, grade_elpa)
@@ -111,6 +111,16 @@ subgroup_grades <- AF_grades_metrics %>%
         grade_ready_grad_subgroups = grade_ready_grad,
         grade_absenteeism_subgroups = grade_absenteeism,
         grade_elpa_subgroups = grade_elpa)
+
+AF_grades_metrics <- subgroup_grades %>%
+    rename(grade_achievement = grade_achievement_subgroups,
+        grade_growth = grade_growth_subgroups,
+        grade_grad = grade_grad_subgroups,
+        grade_ready_grad = grade_ready_grad_subgroups,
+        grade_absenteeism = grade_absenteeism_subgroups,
+        grade_elpa = grade_elpa_subgroups) %>%
+    mutate(subgroup = "Subgroups") %>%
+    bind_rows(AF_grades_metrics, .)
 
 all_students_grades <- AF_grades_metrics %>%
     filter(subgroup == "All Students") %>%
