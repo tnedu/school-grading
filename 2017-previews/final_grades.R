@@ -200,7 +200,8 @@ AF_grades_final <- all_students_grades %>%
         targeted_support = if_else(final_grade == "D", 1L, targeted_support),
         targeted_support = if_else(designation_ineligible == 1, NA_integer_, targeted_support),
         targeted_support = if_else(!is.na(priority_grad) & priority_grad == 1L, NA_integer_, targeted_support),
-        targeted_support = if_else(is.na(targeted_support), 0L, targeted_support)) %>%
+        targeted_support = if_else(is.na(targeted_support), 0L, targeted_support),
+        final_grade = if_else(targeted_support == 1L & final_grade %in% c("A", "B", "C"), paste0(final_grade, "-"), final_grade)) %>%
     select(system, school, pool, designation_ineligible, priority_grad,
         grade_achievement, grade_growth, grade_absenteeism, grade_grad, grade_ready_grad, grade_elpa,
         contains("targeted_support"), final_average, final_grade)
