@@ -1,12 +1,14 @@
 library(acct)
 library(tidyverse)
 
-pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool, designation_ineligible)
 
 bottom_five <- read_csv("data/bottom_five.csv") %>%
     filter(bottom_five == 1) %>%
     transmute(system, school, final_grade = "F")
+
+participation <- read_csv("data/participation_rate_school.csv")
 
 ach_grades <- read_csv("data/achievement_grades.csv") %>%
     select(system, school, subgroup, grade_achievement_abs, grade_achievement_target, grade_achievement)
@@ -185,11 +187,13 @@ all_students_grades <- AF_grades_metrics %>%
     )
 
 AF_grades_final <- all_students_grades %>%
+    full_join(participation, by = c("system", "school")) %>%
     full_join(bottom_five, by = c("system", "school")) %>%
     full_join(targeted_support, by = c("system", "school")) %>%
     mutate(final_grade = case_when(
             designation_ineligible == 1 ~ NA_character_,
             final_grade == "F" ~ "F",
+            meet_all_participation == 0L ~ "F",
             priority_grad == 1L ~ "F",
             final_average > 3 ~ "A",
             final_average > 2 ~ "B",

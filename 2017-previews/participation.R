@@ -8,11 +8,11 @@ math_eoc <- c("Algebra I", "Algebra II", "Geometry", "Integrated Math I", "Integ
 english_eoc <- c("English I", "English II", "English III")
 science_eoc <- c("Biology I", "Chemistry")
 
-pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool) %>%
     filter(!is.na(pool))
 
-school_base <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
+school_base <- read_csv("N:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
         col_types = c("iiicccddddddddddddddddddddddddd")) %>%
     inner_join(pools, by = c("system", "school"))
 
@@ -33,14 +33,14 @@ participation_rate_subgroup <- school_base %>%
 # Aggregate enrolled/tested across subjects
     summarise_at(c("enrolled", "tested"), sum, na.rm = TRUE) %>%
     ungroup() %>%
-    transmute(system, school, pool, subgroup, enrolled, tested,
+    transmute(system, school, subgroup, enrolled, tested,
         participation_rate = if_else(enrolled != 0, round5(100 * tested/enrolled), NA_real_),
         meet_95_participation = as.integer(participation_rate >= 95))
 
 write_csv(participation_rate_subgroup, "data/participation_rate_subgroup.csv", na = "")
 
-participation_rate_school <- participation_rate %>%
-    group_by(system, school, pool) %>%
+participation_rate_school <- participation_rate_subgroup %>%
+    group_by(system, school) %>%
     summarise(meet_all_participation = min(meet_95_participation, na.rm = TRUE))
 
 write_csv(participation_rate_school, "data/participation_rate_school.csv", na = "")
