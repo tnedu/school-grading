@@ -5,13 +5,13 @@ math_eoc <- c("Algebra I", "Algebra II", "Geometry", "Integrated Math I", "Integ
 english_eoc <- c("English I", "English II", "English III")
 science_eoc <- c("Biology I", "Chemistry")
 
-pools_immune <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools_immune <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool, designation_ineligible)
 
 high_schools <- ceiling(0.05 * sum(pools_immune$pool == "HS", na.rm = TRUE))
 k8_schools <- ceiling(0.05 * sum(pools_immune$pool == "K8", na.rm = TRUE))
 
-one_year_success <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
+one_year_success <- read_csv("N:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
         col_types = c("iiicccddddddddddddddddddddddddd")) %>%
     inner_join(pools_immune, by = c("system", "school")) %>%
     filter(subgroup == "All Students",

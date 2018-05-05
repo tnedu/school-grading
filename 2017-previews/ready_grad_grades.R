@@ -2,7 +2,7 @@ library(acct)
 library(haven)
 library(tidyverse)
 
-grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accountability Winter Preview/Data/School Accountability/grad_rate2016_targets.dta") %>%
+grad_target <- read_dta("N:/ORP_accountability/projects/Jessica/2018 Accountability Winter Preview/Data/School Accountability/grad_rate2016_targets.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-English Language Learners with T1/T2", "Non-Students with Disabilities")) %>%
     transmute(system, school,
         subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup),
@@ -10,7 +10,7 @@ grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accountabil
         grad_rate_prior = if_else(grad_cohort >= 30, grad_rate, NA_real_),
         AMO_target = round5(AMO_target2015, 1), AMO_target_4 = round5(AMO_target2015_double, 1))
 
-grad <- read_dta("K:/ORP_accountability/data/2016_graduation_rate/School_grad_rate2017_JP.dta") %>%
+grad <- read_dta("N:/ORP_accountability/data/2016_graduation_rate/School_grad_rate2017_JP.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-English Language Learners with T1/T2", "Non-Students with Disabilities")) %>%
     mutate(subgroup = if_else(subgroup == "English Language Learners with T1/T2", "English Learners", subgroup),
         subgroup = if_else(subgroup == "Hawaiian or Pacific Islander", "Native Hawaiian or Other Pacific Islander", subgroup)) %>%
@@ -39,7 +39,7 @@ grad <- read_dta("K:/ORP_accountability/data/2016_graduation_rate/School_grad_ra
 
 write_csv(grad, path = "data/grad_grades.csv", na = "")
 
-ready_grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accountability Winter Preview/Data/School Accountability/readygrad_school2016_winterpreview.dta") %>%
+ready_grad_target <- read_dta("N:/ORP_accountability/projects/Jessica/2018 Accountability Winter Preview/Data/School Accountability/readygrad_school2016_winterpreview.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-English Language Learners with T1/T2", "Non-Students with Disabilities")) %>%
     transmute(system = as.integer(system), school = as.integer(school),
         subgroup = case_when(
@@ -52,7 +52,7 @@ ready_grad_target <- read_dta("K:/ORP_accountability/projects/Jessica/2018 Accou
         AMO_target = AMO_target2017, AMO_target_4 = AMO_target2017_double
     )
 
-ready_grad <- read_csv("K:/ORP_accountability/projects/2018_amo/school_readygrad_AMO_targets2018_JW_individualsubgroups.csv") %>%
+ready_grad <- read_csv("N:/ORP_accountability/projects/2018_amo/school_readygrad_AMO_targets2018_JW_individualsubgroups.csv") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-Students with Disabilities")) %>%
     mutate(subgroup = case_when(
         subgroup == "English Language Learners with T1/T2" ~ "English Learners",

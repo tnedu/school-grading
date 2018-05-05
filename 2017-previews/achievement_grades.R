@@ -10,11 +10,11 @@ math_eoc <- c("Algebra I", "Algebra II", "Geometry", "Integrated Math I", "Integ
 english_eoc <- c("English I", "English II", "English III")
 science_eoc <- c("Biology I", "Chemistry")
 
-pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool) %>%
     filter(!is.na(pool))
 
-school_base <- read_csv("K:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
+school_base <- read_csv("N:/ORP_accountability/data/2017_final_accountability_files/school_base_2017_for_accountability.csv",
     col_types = c("iiicccddddddddddddddddddddddddd")) %>%
     inner_join(pools, by = c("system", "school"))
 
@@ -50,7 +50,7 @@ hs_amos <- school_base %>%
         AMO_target_4 = amo_target(valid_tests_prior, pct_on_mastered_prior, double = TRUE))
     
 # 2015 K-8 Success Rate
-k8_success_2015 <- read_csv("K:/ORP_accountability/data/2015_sas_accountability/ASD included grades/school_base_2015_19jul2015.csv") %>%
+k8_success_2015 <- read_csv("N:/ORP_accountability/data/2015_sas_accountability/ASD included grades/school_base_2015_19jul2015.csv") %>%
     mutate(system = as.integer(system),
         subgroup = case_when(
             subgroup == "English Language Learners with T1/T2" ~ "English Learners with T1/T2",

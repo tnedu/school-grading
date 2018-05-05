@@ -2,7 +2,7 @@ library(readxl)
 library(tidyverse)
 
 # Recalculate TVAAS to exclude US History
-hs_TVAAS <- read_excel("K:/ORP_accountability/data/2017_tvaas/Updated School Subject Level 2016-17.xlsx") %>%
+hs_TVAAS <- read_excel("N:/ORP_accountability/data/2017_tvaas/Updated School Subject Level 2016-17.xlsx") %>%
     janitor::clean_names() %>%
     filter(test == "EOC", subject != "US History") %>%
     group_by(district, district_number, school, school_number) %>%
@@ -32,10 +32,10 @@ hs_TVAAS <- read_excel("K:/ORP_accountability/data/2017_tvaas/Updated School Sub
 write_csv(hs_TVAAS, path = "data/tvaas_hs_composites.csv", na = "")
 
 # Grades for preview
-pools_immune <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools_immune <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool)
 
-tvaas_k8 <- read_excel("K:/ORP_accountability/data/2017_tvaas/SAS-NIET School-Wide Indexes-E1E2M2-Suppressions.xlsx") %>%
+tvaas_k8 <- read_excel("N:/ORP_accountability/data/2017_tvaas/SAS-NIET School-Wide Indexes-E1E2M2-Suppressions.xlsx") %>%
     transmute(system = as.integer(`District Number`), school = as.integer(`School Number`),
         index = `TCAP/EOC: School-Wide: Composite`) %>%
     inner_join(pools_immune, by = c("system", "school")) %>%

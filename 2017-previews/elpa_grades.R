@@ -1,6 +1,6 @@
 library(tidyverse)
 
-elpa <- haven::read_dta("K:/ORP_accountability/data/2017_ELPA/school_level_elpa_JW.dta") %>%
+elpa <- haven::read_dta("N:/ORP_accountability/data/2017_ELPA/school_level_elpa_JW.dta") %>%
     filter(!subgroup %in% c("Non-Economically Disadvantaged", "Non-Students with Disabilities", "Unidentified")) %>% 
     transmute(system, school = schoolnumber, pct_met_growth_standard,
         subgroup = case_when(

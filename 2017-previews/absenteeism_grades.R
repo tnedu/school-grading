@@ -1,11 +1,11 @@
 library(acct)
 library(tidyverse)
 
-instructional_days <- readxl::read_excel("K:/Research_Transfers/2018_01_Jan_16Absenteeism/data/Instructional_Days_SY_2015_16.xlsx") %>%
+instructional_days <- readxl::read_excel("N:/Research_Transfers/2018_01_Jan_16Absenteeism/data/Instructional_Days_SY_2015_16.xlsx") %>%
     transmute(year = 2017, system_name = DISTRICT_NAME, system = DISTRICT_NO,
         school_name = SCHOOL_NAME, school = SCHOOL_NO, instructional_days = INSTRUCTIONAL_DAYS)
 
-demographic <- read_delim("K:/Research and Policy/ORP_Data/Student_Information/Student_Demographics/Raw_Files/Student_Demographics_2016.txt", delim = "\t") %>%
+demographic <- read_delim("N:/Research and Policy/ORP_Data/Student_Information/Student_Demographics/Raw_Files/Student_Demographics_2016.txt", delim = "\t") %>%
     janitor::clean_names() %>%
     transmute(student_key,
         ED = directcertecondis == "Y",
@@ -13,7 +13,7 @@ demographic <- read_delim("K:/Research and Policy/ORP_Data/Student_Information/S
             p11 == "Y" | p12 == "Y" | p13 == "Y" | p14 == "Y" | p15 == "Y" | p17 == "Y" | p18 == "Y",
         EL = englishlearner == "Y" | transitional1 == "Y" | transitional2 == "Y")
 
-attendance <- read_csv("K:/ORP_accountability/projects/Alex/school-grading/2017-previews/data/absenteeism_student_level.csv") %>%
+attendance <- read_csv("N:/ORP_accountability/projects/Alex/school-grading/2017-previews/data/absenteeism_student_level.csv") %>%
     janitor::clean_names() %>%
     filter(grade %in% c("K", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")) %>%
     transmute(instructional_program_num, system = district_no, school = school_no, grade,
@@ -95,11 +95,11 @@ absenteeism_targets <- school_CA %>%
 
 write_csv(absenteeism_targets, "data/absenteeism_targets.csv", na = "")
 
-pools <- read_csv("K:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
+pools <- read_csv("N:/ORP_accountability/projects/2017_school_accountability/grade_pools_designation_immune.csv") %>%
     select(system, school, pool) %>%
     filter(!is.na(pool))
 
-absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absenteeism/school_chronic_absenteeism.csv",
+absenteeism_grades <- read_csv("N:/ORP_accountability/data/2017_chronic_absenteeism/school_chronic_absenteeism.csv",
         col_types = "iicicccdddiiiddd") %>%
     select(system, school, subgroup, n_students, pct_CA = pct_chronically_absent) %>%
     left_join(absenteeism_targets, by = c("system", "school", "subgroup")) %>%
@@ -128,7 +128,7 @@ absenteeism_grades <- read_csv("K:/ORP_accountability/data/2017_chronic_absentee
         ),
         grade_absenteeism = pmin(grade_absenteeism_abs, grade_absenteeism_reduction)
     ) %>%
-    select(system, school, subgroup, pct_CA_prior, pct_CA, lower_bound_ci, AMO_target, AMO_target_4,
+    select(system, school, subgroup, n_students, pct_CA_prior, pct_CA, lower_bound_ci, AMO_target, AMO_target_4,
         grade_absenteeism_abs, grade_absenteeism_reduction, grade_absenteeism)
 
 write_csv(absenteeism_grades, "data/absenteeism_grades.csv", na = "")
